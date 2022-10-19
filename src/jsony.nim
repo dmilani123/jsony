@@ -554,7 +554,7 @@ proc parseHook*[T: distinct](s: string, i: var int, v: var T) =
   parseHook(s, i, x)
   v = cast[T](x)
 
-proc fromJson*[T](s: string, x: typedesc[T]): T =
+proc fromJson*[T](s: string, x: typedesc[T], raiseOnMissingKey = false): T =
   ## Takes json and outputs the object it represents.
   ## * Extra json fields are ignored.
   ## * Missing json fields keep their default values.
