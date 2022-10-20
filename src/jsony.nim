@@ -351,9 +351,16 @@ template snakeCase(s: string): string =
   k
 
 proc parseObjectInner[T](s: string, i: var int, v: var T) =
+  echo "v=" & repr(v)
+  echo "s=" & s
+  echo "i=" & $i
+  echo "s.len=" & $s.len
+  var foundKeys = newSeq[string]()
   while i < s.len:
+    echo "while entered"
     eatSpace(s, i)
     if i < s.len and s[i] == '}':
+      echo "break 1"
       break
     var key: string
     parseHook(s, i, key)
@@ -363,6 +370,7 @@ proc parseObjectInner[T](s: string, i: var int, v: var T) =
     block all:
       for k, v in v.fieldPairs:
         if k == key or snakeCase(k) == key:
+          foundKeys.add(k)
           var v2: type(v)
           parseHook(s, i, v2)
           v = v2
@@ -373,8 +381,15 @@ proc parseObjectInner[T](s: string, i: var int, v: var T) =
       inc i
     else:
       break
+  echo typeof(v)
   when compiles(postHook(v)):
     postHook(v)
+  echo "typeof(v)=" & $typeof(v)
+  echo "validationHook(v, foundKeys) = " & $compiles(validationHook(v, foundKeys))
+  when compiles(validationHook(v, foundKeys)):
+    validationHook(v, foundKeys)
+  
+
 
 proc parseHook*[T: tuple](s: string, i: var int, v: var T) =
   echo "proc parseHook*[T: tuple](s: string, i: var int, v: var T)"
@@ -570,21 +585,14 @@ proc parseHook*[T: distinct](s: string, i: var int, v: var T) =
   parseHook(s, i, x)
   v = cast[T](x)
 
-proc fromJson*[T](s: string, x: typedesc[T], raiseOnMissingKey = false): T =
+proc fromJson*[T](s: string, x: typedesc[T]): T =
   ## Takes json and outputs the object it represents.
   ## * Extra json fields are ignored.
   ## * Missing json fields keep their default values.
   ## * `proc newHook(foo: var ...)` Can be used to populate default values.
   var i = 0
-  echo "s=" & $s
-  echo "x=" & $x
-  echo "T=" & $T
-  echo "raiseOnMissingKey=" & $raiseOnMissingKey
-  echo "xIsObject=" & $(x is object)
-  when compiles(s.parseHook(i, result)):
-    s.parseHook(i, result)
-  else:
-    s.parseHook(i, result, raiseOnMissingKey)
+  s.parseHook(i, result)
+
   
 
 proc fromJson*(s: string): JsonNode =
