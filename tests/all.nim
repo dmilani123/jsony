@@ -12,6 +12,7 @@ import test_numbers
 import test_objects
 import test_options
 import test_parseHook
+import test_raiseOnMissingKey
 import test_sets
 import test_strings
 import test_tables

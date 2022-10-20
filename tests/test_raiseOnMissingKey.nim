@@ -10,4 +10,5 @@ doAssert o.myKey == "my value"
 
 doAssertRaises Exception:
     var s = """{}"""
-    discard s.fromJson(MyType)
+    discard s.fromJson(MyType, true)
+echo "Got exception"
