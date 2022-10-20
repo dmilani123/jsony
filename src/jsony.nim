@@ -61,7 +61,6 @@ proc parseSymbol*(s: string, i: var int): string =
   return s[j ..< i]
 
 proc parseHook*(s: string, i: var int, v: var bool) =
-  echo "proc parseHook*(s: string, i: var int, v: var bool)"
   ## Will parse boolean true or false.
   when nimvm:
     case parseSymbol(s, i)
@@ -84,7 +83,6 @@ proc parseHook*(s: string, i: var int, v: var bool) =
       error("Boolean true or false expected.", i)
 
 proc parseHook*(s: string, i: var int, v: var SomeUnsignedInt) =
-  echo "proc parseHook*(s: string, i: var int, v: var SomeUnsignedInt)"
   ## Will parse unsigned integers.
   when nimvm:
     v = type(v)(parseInt(parseSymbol(s, i)))
@@ -101,7 +99,6 @@ proc parseHook*(s: string, i: var int, v: var SomeUnsignedInt) =
     v = type(v)(v2)
 
 proc parseHook*(s: string, i: var int, v: var SomeSignedInt) =
-  echo "proc parseHook*(s: string, i: var int, v: var SomeSignedInt)"
   ## Will parse signed integers.
   when nimvm:
     v = type(v)(parseInt(parseSymbol(s, i)))
@@ -123,7 +120,6 @@ proc parseHook*(s: string, i: var int, v: var SomeSignedInt) =
         error("Number type to small to contain the number.", i)
 
 proc parseHook*(s: string, i: var int, v: var SomeFloat) =
-  echo "proc parseHook*(s: string, i: var int, v: var SomeFloat)"
   ## Will parse float32 and float64.
   var f: float
   eatSpace(s, i)
@@ -236,7 +232,6 @@ proc parseStringFast(s: string, i: var int, v: var string) =
   eatChar(s, i, '"')
 
 proc parseHook*(s: string, i: var int, v: var string) =
-  echo "proc parseHook*(s: string, i: var int, v: var string)"
   ## Parse string.
   eatSpace(s, i)
   if i + 3 < s.len and s[i+0] == 'n' and s[i+1] == 'u' and s[i+2] == 'l' and s[i+3] == 'l':
@@ -253,7 +248,6 @@ proc parseHook*(s: string, i: var int, v: var string) =
       parseStringFast(s, i, v)
 
 proc parseHook*(s: string, i: var int, v: var char) =
-  echo "proc parseHook*(s: string, i: var int, v: var char)"
   var str: string
   s.parseHook(i, str)
   if str.len != 1:
@@ -261,7 +255,6 @@ proc parseHook*(s: string, i: var int, v: var char) =
   v = str[0]
 
 proc parseHook*[T](s: string, i: var int, v: var seq[T]) =
-  echo "proc parseHook*[T](s: string, i: var int, v: var seq[T])"
   ## Parse seq.
   eatChar(s, i, '[')
   while i < s.len:
@@ -279,7 +272,6 @@ proc parseHook*[T](s: string, i: var int, v: var seq[T]) =
   eatChar(s, i, ']')
 
 proc parseHook*[T: array](s: string, i: var int, v: var T) =
-  echo "proc parseHook*[T: array](s: string, i: var int, v: var T)"
   eatSpace(s, i)
   eatChar(s, i, '[')
   for value in v.mitems:
@@ -291,7 +283,6 @@ proc parseHook*[T: array](s: string, i: var int, v: var T) =
   eatChar(s, i, ']')
 
 proc parseHook*[T: not object](s: string, i: var int, v: var ref T) =
-  echo "proc parseHook*[T: not object](s: string, i: var int, v: var ref T)"
   eatSpace(s, i)
   if i + 3 < s.len and s[i+0] == 'n' and s[i+1] == 'u' and s[i+2] == 'l' and s[i+3] == 'l':
     i += 4
@@ -351,16 +342,10 @@ template snakeCase(s: string): string =
   k
 
 proc parseObjectInner[T](s: string, i: var int, v: var T) =
-  echo "v=" & repr(v)
-  echo "s=" & s
-  echo "i=" & $i
-  echo "s.len=" & $s.len
   var foundKeys = newSeq[string]()
   while i < s.len:
-    echo "while entered"
     eatSpace(s, i)
     if i < s.len and s[i] == '}':
-      echo "break 1"
       break
     var key: string
     parseHook(s, i, key)
@@ -381,18 +366,12 @@ proc parseObjectInner[T](s: string, i: var int, v: var T) =
       inc i
     else:
       break
-  echo typeof(v)
   when compiles(postHook(v)):
     postHook(v)
-  echo "typeof(v)=" & $typeof(v)
-  echo "validationHook(v, foundKeys) = " & $compiles(validationHook(v, foundKeys))
   when compiles(validationHook(v, foundKeys)):
     validationHook(v, foundKeys)
-  
-
 
 proc parseHook*[T: tuple](s: string, i: var int, v: var T) =
-  echo "proc parseHook*[T: tuple](s: string, i: var int, v: var T)"
   eatSpace(s, i)
   when T.isNamedTuple():
     if i < s.len and s[i] == '{':
@@ -410,7 +389,6 @@ proc parseHook*[T: tuple](s: string, i: var int, v: var T) =
   eatChar(s, i, ']')
 
 proc parseHook*[T: enum](s: string, i: var int, v: var T) =
-  echo "proc parseHook*[T: enum](s: string, i: var int, v: var T)"
   eatSpace(s, i)
   var strV: string
   if i < s.len and s[i] == '"':
@@ -430,7 +408,6 @@ proc parseHook*[T: enum](s: string, i: var int, v: var T) =
       error("Can't parse enum.", i)
 
 proc parseHook*[T: object|ref object](s: string, i: var int, v: var T) =
-  echo "proc parseHook*[T: object|ref object](s: string, i: var int, v: var T)"
   ## Parse an object or ref object.
   eatSpace(s, i)
   if i + 3 < s.len and s[i+0] == 'n' and s[i+1] == 'u' and s[i+2] == 'l' and s[i+3] == 'l':
@@ -473,7 +450,6 @@ proc parseHook*[T: object|ref object](s: string, i: var int, v: var T) =
   eatChar(s, i, '}')
 
 proc parseHook*[T](s: string, i: var int, v: var Option[T]) =
-  echo "proc parseHook*[T](s: string, i: var int, v: var Option[T])"
   ## Parse an Option.
   eatSpace(s, i)
   if i + 3 < s.len and s[i+0] == 'n' and s[i+1] == 'u' and s[i+2] == 'l' and s[i+3] == 'l':
@@ -484,7 +460,6 @@ proc parseHook*[T](s: string, i: var int, v: var Option[T]) =
   v = some(e)
 
 proc parseHook*[T](s: string, i: var int, v: var SomeTable[string, T]) =
-  echo "proc parseHook*[T](s: string, i: var int, v: var SomeTable[string, T])"
   ## Parse an object.
   when compiles(new(v)):
     new(v)
@@ -506,7 +481,6 @@ proc parseHook*[T](s: string, i: var int, v: var SomeTable[string, T]) =
   eatChar(s, i, '}')
 
 proc parseHook*[T](s: string, i: var int, v: var (SomeSet[T]|set[T])) =
-  echo "proc parseHook*[T](s: string, i: var int, v: var (SomeSet[T]|set[T]))"
   ## Parses `HashSet`, `OrderedSet`, or a built-in `set` type.
   eatSpace(s, i)
   eatChar(s, i, '[')
@@ -523,7 +497,6 @@ proc parseHook*[T](s: string, i: var int, v: var (SomeSet[T]|set[T])) =
   eatChar(s, i, ']')
 
 proc parseHook*(s: string, i: var int, v: var JsonNode) =
-  echo "proc parseHook*(s: string, i: var int, v: var JsonNode)"
   ## Parses a regular json node.
   eatSpace(s, i)
   if i < s.len and s[i] == '{':
@@ -592,8 +565,6 @@ proc fromJson*[T](s: string, x: typedesc[T]): T =
   ## * `proc newHook(foo: var ...)` Can be used to populate default values.
   var i = 0
   s.parseHook(i, result)
-
-  
 
 proc fromJson*(s: string): JsonNode =
   ## Takes json parses it into `JsonNode`s.
