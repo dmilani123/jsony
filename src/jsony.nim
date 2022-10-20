@@ -342,6 +342,7 @@ template snakeCase(s: string): string =
   k
 
 proc parseObjectInner[T](s: string, i: var int, v: var T) =
+  var foundKeys = newSeq[string]()
   while i < s.len:
     eatSpace(s, i)
     if i < s.len and s[i] == '}':
@@ -354,6 +355,7 @@ proc parseObjectInner[T](s: string, i: var int, v: var T) =
     block all:
       for k, v in v.fieldPairs:
         if k == key or snakeCase(k) == key:
+          foundKeys.add(k)
           var v2: type(v)
           parseHook(s, i, v2)
           v = v2
@@ -366,6 +368,8 @@ proc parseObjectInner[T](s: string, i: var int, v: var T) =
       break
   when compiles(postHook(v)):
     postHook(v)
+  when compiles(validationHook(v, foundKeys)):
+    validationHook(v, foundKeys)
 
 proc parseHook*[T: tuple](s: string, i: var int, v: var T) =
   eatSpace(s, i)
