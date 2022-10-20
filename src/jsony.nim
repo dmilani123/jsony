@@ -581,10 +581,10 @@ proc fromJson*[T](s: string, x: typedesc[T], raiseOnMissingKey = false): T =
   echo "T=" & $T
   echo "raiseOnMissingKey=" & $raiseOnMissingKey
   echo "xIsObject=" & $(x is object)
-  when compiles(s.parseHook(i, result, raiseOnMissingKey)):
-    s.parseHook(i, result, raiseOnMissingKey)
-  else:
+  when compiles(s.parseHook(i, result)):
     s.parseHook(i, result)
+  else:
+    s.parseHook(i, result, raiseOnMissingKey)
   
 
 proc fromJson*(s: string): JsonNode =
